@@ -170,32 +170,75 @@ def top_categories(
     return result
 
 
-def compute_quality_flags(summary: DatasetSummary, missing_df: pd.DataFrame) -> Dict[str, Any]:
+def compute_quality_flags(
+    summary: DatasetSummary, 
+    missing_df: pd.DataFrame,
+    df: Optional[pd.DataFrame] = None  # ← ДОБАВИТЬ ЭТО!
+) -> Dict[str, Any]:
     """
-    Простейшие эвристики «качества» данных:
+    Эвристики «качества» данных:
     - слишком много пропусков;
     - подозрительно мало строк;
-    и т.п.
+    - константные колонки;
+    - дубликаты в ID-колонках.
     """
     flags: Dict[str, Any] = {}
+    
+    # === СУЩЕСТВУЮЩИЕ ФЛАГИ ===
     flags["too_few_rows"] = summary.n_rows < 100
     flags["too_many_columns"] = summary.n_cols > 100
-
+    
     max_missing_share = float(missing_df["missing_share"].max()) if not missing_df.empty else 0.0
     flags["max_missing_share"] = max_missing_share
     flags["too_many_missing"] = max_missing_share > 0.5
-
-    # Простейший «скор» качества
+    
+    # === НОВАЯ ЭВРИСТИКА 1: Константные колонки ===
+    constant_columns = []
+    for col in summary.columns:
+        if col.unique <= 1 and col.non_null > 0:
+            constant_columns.append(col.name)
+    
+    flags["has_constant_columns"] = len(constant_columns) > 0
+    flags["constant_columns_list"] = constant_columns
+    flags["constant_columns_count"] = len(constant_columns)
+    
+    # === НОВАЯ ЭВРИСТИКА 2: Дубликаты в ID-колонках ===
+    id_columns_with_duplicates = []
+    
+    if df is not None:  # ← ПРОВЕРКА!
+        for col in summary.columns:
+            if 'id' in col.name.lower():
+                if col.unique < col.non_null:
+                    duplicates_count = col.non_null - col.unique
+                    id_columns_with_duplicates.append({
+                        "column": col.name,
+                        "total_values": col.non_null,
+                        "unique_values": col.unique,
+                        "duplicates": duplicates_count
+                    })
+    
+    flags["has_suspicious_id_duplicates"] = len(id_columns_with_duplicates) > 0
+    flags["id_columns_with_duplicates"] = id_columns_with_duplicates
+    
+    # === ОБНОВЛЕННЫЙ СКОР КАЧЕСТВА ===
     score = 1.0
-    score -= max_missing_share  # чем больше пропусков, тем хуже
+    
+    score -= max_missing_share
     if summary.n_rows < 100:
         score -= 0.2
     if summary.n_cols > 100:
         score -= 0.1
-
+    
+    if flags["has_constant_columns"]:
+        constant_ratio = len(constant_columns) / summary.n_cols
+        score -= 0.15 * constant_ratio
+    
+    if flags["has_suspicious_id_duplicates"]:
+        score -= 0.25
+    
     score = max(0.0, min(1.0, score))
-    flags["quality_score"] = score
-
+    flags["quality_score"] = round(score, 3)
+    
     return flags
 
 
