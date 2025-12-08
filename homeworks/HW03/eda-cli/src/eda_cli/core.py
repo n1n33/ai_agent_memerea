@@ -173,7 +173,7 @@ def top_categories(
 def compute_quality_flags(
     summary: DatasetSummary, 
     missing_df: pd.DataFrame,
-    df: Optional[pd.DataFrame] = None  # ← ДОБАВИТЬ ЭТО!
+    df: Optional[pd.DataFrame] = None,
 ) -> Dict[str, Any]:
     """
     Эвристики «качества» данных:
