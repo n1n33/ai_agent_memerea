@@ -152,12 +152,17 @@ def report(
         f.write(f"- Слишком много пропусков: **{quality_flags['too_many_missing']}**\n")
 
         # Новые эвристики
-        if quality_flags.get('has_constant_columns'):
-            f.write(f"- Константные колонки: **{quality_flags['constant_columns_list']}**\n")
+        if quality_flags.get("has_constant_columns"):
+            f.write(
+                f"- Константные колонки: **{quality_flags['constant_columns_count']}** "
+                f"({quality_flags['constant_columns_list']})\n"
+            )
+        else:
+            f.write("- Константные колонки: **0**\n")
 
-        if quality_flags.get('has_suspicious_id_duplicates'):
-            f.write(f"- Дубликаты в ID-колонках:\n")
-            for item in quality_flags.get('id_columns_with_duplicates', []):
+        if quality_flags.get("has_suspicious_id_duplicates"):
+            f.write("- Дубликаты в ID-колонках:\n")
+            for item in quality_flags.get("id_columns_with_duplicates", []):
                 f.write(f"  - `{item['column']}`: {item['duplicates']} дубликатов\n")
 
         f.write("\n")

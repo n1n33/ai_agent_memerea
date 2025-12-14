@@ -198,9 +198,10 @@ def compute_quality_flags(
         if col.unique <= 1 and col.non_null > 0:
             constant_columns.append(col.name)
     
-    flags["has_constant_columns"] = len(constant_columns) > 0
+    constant_columns_count = len(constant_columns)
+    flags["has_constant_columns"] = constant_columns_count > 0
     flags["constant_columns_list"] = constant_columns
-    flags["constant_columns_count"] = len(constant_columns)
+    flags["constant_columns_count"] = constant_columns_count    
     
     # === НОВАЯ ЭВРИСТИКА 2: Дубликаты в ID-колонках ===
     id_columns_with_duplicates = []
@@ -230,7 +231,7 @@ def compute_quality_flags(
         score -= 0.1
     
     if flags["has_constant_columns"]:
-        constant_ratio = len(constant_columns) / summary.n_cols
+        constant_ratio = constant_columns_count / summary.n_cols
         score -= 0.15 * constant_ratio
     
     if flags["has_suspicious_id_duplicates"]:
