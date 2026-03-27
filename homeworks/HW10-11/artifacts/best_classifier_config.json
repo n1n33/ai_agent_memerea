@@ -1,0 +1,13 @@
+{
+  "experiment_id": "C3",
+  "dataset": "STL10",
+  "model": "C3",
+  "notes": "head only",
+  "lr": 0.001,
+  "epochs": 5,
+  "batch_size": 64,
+  "seed": 42,
+  "transforms": "Resize(224) + ToTensor + Normalize(ImageNet)",
+  "best_val_accuracy": 0.941,
+  "test_accuracy": 0.943
+}
