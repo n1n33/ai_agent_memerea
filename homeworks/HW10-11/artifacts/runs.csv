@@ -1,7 +1,7 @@
 experiment_id,task,dataset,seed,model_summary,optimizer,lr,epochs_trained,best_val_accuracy,test_accuracy,precision,recall,mean_iou,notes
-C1,classification,STL10,42,SimpleCNN,Adam,0.001,5,0.523,,,,,no aug
-C2,classification,STL10,42,SimpleCNN,Adam,0.001,5,0.534,,,,,aug
+C1,classification,STL10,42,SimpleCNN,Adam,0.001,5,0.534,,,,,no aug
+C2,classification,STL10,42,SimpleCNN,Adam,0.001,5,0.551,,,,,aug
 C3,classification,STL10,42,ResNet18-head,Adam,0.001,5,0.941,0.943,,,,head only
 C4,classification,STL10,42,ResNet18-ft,Adam,0.001,5,0.923,,,,,finetune
-V1,segmentation,VOC2012,42,DeepLabV3_ResNet50,,,,,,0.8538,0.9523,0.8188,"baseline argmax, foreground=class15(person)"
-V2,segmentation,VOC2012,42,DeepLabV3_ResNet50,,,,,,0.8535,0.9485,0.8157,"alt: remove components < 500px, foreground=class15(person)"
+V1,segmentation,VOC,42,DeepLabV3_ResNet50,,,,,,0.8538,0.9523,0.8188,"baseline argmax, foreground=class15(person)"
+V2,segmentation,VOC,42,DeepLabV3_ResNet50,,,,,,0.8535,0.9485,0.8157,"alt: remove components < 500px, foreground=class15(person)"
