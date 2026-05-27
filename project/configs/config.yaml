@@ -1,0 +1,18 @@
+app_name: "EduRAG: Qwen 14B Edition"
+data_path: "data/raw/math_dataset"
+vector_store_path: "data/processed/faiss_index"
+
+# Настройки модели
+llm_model: "edu-qwen-14b" # Имя созданной нами модели в Ollama
+ollama_base_url: "http://localhost:11434"
+
+# Эмбеддинги
+# multilingual-e5-base занимает ~700MB VRAM (large занимает ~2.5GB).
+# base лучше для 12GB карты, чтобы осталось место под LLM.
+embedding_model: "intfloat/multilingual-e5-base"
+embedding_device: "cuda"
+
+# Нарезка текста
+chunk_size: 800      # Размер куска текста
+chunk_overlap: 150   # Перекрытие для сохранения контекста
+search_k: 5          # Сколько кусков отправлять в LLM
