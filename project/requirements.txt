@@ -1,0 +1,30 @@
+# Core
+langchain
+langchain-community
+langchain-ollama
+langchain-huggingface
+langchain-text-splitters
+
+# Vector DB
+faiss-cpu
+
+# ML & Embeddings
+sentence-transformers
+# Важно для GPU ускорения (проверьте установку CUDA версии отдельно, если не подхватится)
+torch
+accelerate
+
+# Documents
+pypdf
+python-docx
+# unstructured # Убрал, чтобы облегчить установку, используем нативные лоадеры
+
+# Web / UI
+streamlit
+streamlit-extras
+watchdog
+
+# Utils
+python-dotenv
+pyyaml
+loguru
