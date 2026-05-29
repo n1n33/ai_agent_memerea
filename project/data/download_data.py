@@ -7,7 +7,7 @@ from pathlib import Path
 DATASET_NAME = "jeggers/competition_math"
 # Указываем конкретную конфигурацию 'original', чтобы получить текст задач
 CONFIG_NAME = "original"
-OUTPUT_DIR = Path("data/raw/math_dataset")
+OUTPUT_DIR = Path("raw/math_dataset")
 
 # Лимит задач на категорию (для теста 100, если хотите всё — поставьте None)
 LIMIT_PER_CATEGORY = 100

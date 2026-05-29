@@ -1,3 +1,5 @@
+langchain-classic
+langchain-core
 # Core
 langchain
 langchain-community

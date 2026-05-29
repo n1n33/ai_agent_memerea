@@ -1,8 +1,8 @@
 from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 # В версии 0.3.x это самый надежный способ импорта:
-from langchain.chains.retrieval import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_classic.chains import create_retrieval_chain
+from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 from src.vector_store import VectorDB
 
 def get_rag_chain(config, vector_db: VectorDB):

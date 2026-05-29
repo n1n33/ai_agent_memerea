@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 def load_config():
-    config_path = Path("config.yaml")
+    config_path = Path("configs/config.yaml")
     if not config_path.exists():
         raise FileNotFoundError("config.yaml not found!")
 
