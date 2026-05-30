@@ -25,32 +25,30 @@
 
 Проект организован в следующей структуре:
 
-- `requirements.txt` – зависимости проекта, необходимые для запуска RAG-системы.
-- `README.md` – основная документация по установке, настройке и запуску проекта.
-- `app.py` – веб-приложение на Streamlit, через которое пользователь задаёт вопросы и получает ответы.
-- `config.yaml` – основной конфигурационный файл проекта: пути к данным, параметры эмбеддингов, LLM и поиска.
-- `download_data.py` - скрипт для загрузки или подготовки данных.
-- `evaluate.py` - скрипт для тестирования качества работы системы.
-- `test_dataset_expanded.json` - тестовый набор вопросов для проверки системы.
-- `evaluation_results.csv` - результаты экспериментов и оценки качества.
-- `Modelfile` – файл конфигурации локальной модели Qwen для запуска через Ollama.
+- `configs/` - основные параметры конфигурации системы:
+  - `config.yaml` – конфигурационный файл проекта: пути к данным, параметры эмбеддингов, LLM и поиска;
+  - `Modelfile` – файл конфигурации локальной модели Qwen для запуска через Ollama.
+- `artifacts/` - артифакты работы системы, логи и прочее:
+  - `evaluate.py` - скрипт для тестирования качества работы системы;
+  - `test_dataset_expanded.json` - тестовый набор вопросов для проверки системы;
+  - `evaluation_results.csv` - результаты экспериментов и оценки качества;
+  - `FINAL_REPORT.md` – итоговый отчёт;
+  - `MODEL_REPORT.md` – отчёт по тестированию модели;
+  - `VALIDATION_REPORT.md` - протокол валидации системы;
+  - `FULL_TEST_LOGS.md` - подробные логи тестовых запусков.
 - `src/` – основной код проекта:
+  - `app.py` – веб-приложение на Streamlit, через которое пользователь задаёт вопросы и получает ответы;
   - `config.py` - загрузка конфигурации;
   - `document_loader.py` - загрузка и обработка документов разных форматов;
   - `vector_store.py`создание и загрузка векторной базы FAISS;
   - `rag_chain.py` - построение RAG-цепочки: поиск релевантных фрагментов и генерация ответа;
   - `visualization.py` - формирование отчётов по результатам тестирования.
 - `data/` – данные проекта:
-  - `data/raw/math_dataset/` - исходные учебные материалы по математике;
-  - `data/processed/faiss_index\` - сохранённый FAISS-индекс для семантического поиска.
-
-- `FINAL_REPORT.md` – итоговый отчёт.
-- `MODEL_REPORT.md` – отчёт по тестированию модели.
-- `VALIDATION_REPORT.md` - протокол валидации системы.
-- `FULL_TEST_LOGS.md` - подробные логи тестовых запусков.
-
-В проекте отсутствуют отдельные директории notebooks/, tests/, configs/ и artifacts/: конфигурация находится в корневом файле config.yaml, отчёты и результаты экспериментов также сохранены в корне проекта, а артефакт векторной базы размещён в data/processed/faiss_index/
-
+  - `download_data.py` - скрипт для загрузки или подготовки данных;
+  - `raw/math_dataset/` - исходные учебные материалы по математике;
+  - `processed/faiss_index/` - сохранённый FAISS-индекс для семантического поиска.
+- `requirements.txt` – зависимости проекта, необходимые для запуска RAG-системы.
+- `README.md` – основная документация по установке, настройке и запуску проекта.
 ---
 
 ## 3. Требования и установка
@@ -193,7 +191,7 @@ data/processed/faiss_index/
 Проект запускается как Streamlit-приложение:
 
 ```bash
-streamlit run app.py
+py -m streamlit run src/app.py
 ```
 
 После запуска веб-интерфейс будет доступен в браузере по адресу:
@@ -243,28 +241,28 @@ http://localhost:8501
 Для воспроизведения оценки качества используется скрипт:
 
 ```bash
-python evaluate.py
+python artifacts/evaluate.py
 ```
 
 Он использует тестовый набор:
 
 ```text
-test_dataset_expanded.json
+artifacts/test_dataset_expanded.json
 ```
 
 По результатам запуска формируются или обновляются отчёты:
 
 ```text
-VALIDATION_REPORT.md
-FULL_TEST_LOGS.md
+artifacts/VALIDATION_REPORT.md
+artifacts/FULL_TEST_LOGS.md
 ```
 
 Также в проекте уже присутствуют сохранённые результаты экспериментов:
 
 ```text
-evaluation_results.csv
-MODEL_REPORT.md
-FINAL_REPORT.md
+artifacts/evaluation_results.csv
+artifacts/MODEL_REPORT.md
+artifacts/FINAL_REPORT.md
 ```
 
 ---
@@ -298,21 +296,21 @@ data/processed/faiss_index/
 В репозитории также находится тестовый набор вопросов:
 
 ```text
-test_dataset_expanded.json
+artifacts/test_dataset_expanded.json
 ```
 
 Он используется для проверки качества ответов системы при запуске:
 
 ```bash
-python evaluate.py
+artifacts/python evaluate.py
 ```
 
 Результаты тестирования сохраняются в файлах:
 
 ```text
-VALIDATION_REPORT.md
-FULL_TEST_LOGS.md
-evaluation_results.csv
+artifacts/VALIDATION_REPORT.md
+artifacts/FULL_TEST_LOGS.md
+artifacts/evaluation_results.csv
 ```
 
 Большие конфиденциальные данные в проекте не используются. При необходимости исходные учебные материалы можно обновить или заменить, добавив новые документы в папку:
@@ -355,7 +353,7 @@ source .venv/bin/activate
 ```
 
 ```bash
-python evaluate.py
+python artifacts/evaluate.py
 ```
 
 Перед запуском проверки необходимо убедиться, что:
@@ -368,16 +366,16 @@ python evaluate.py
 После выполнения скрипта формируются или обновляются файлы:
 
 ```text
-VALIDATION_REPORT.md
-FULL_TEST_LOGS.md
+artifacts/VALIDATION_REPORT.md
+artifacts/FULL_TEST_LOGS.md
 ```
 
 Также в проекте уже присутствуют сохранённые результаты предыдущих запусков:
 
 ```text
-MODEL_REPORT.md
-FINAL_REPORT.md
-evaluation_results.csv
+artifacts/MODEL_REPORT.md
+artifacts/FINAL_REPORT.md
+artifacts/evaluation_results.csv
 ```
 
 ---
@@ -387,8 +385,8 @@ evaluation_results.csv
 На защите я планирую показать работу проекта как локального веб-приложения для вопросно-ответного поиска по учебным материалам.
 
 1. Сначала кратко покажу структуру проекта:
-   - `app.py` – веб-интерфейс системы;
    - `src/` – основной код RAG-системы;
+   - `src/app.py` – веб-интерфейс системы;
    - `data/raw/math_dataset/` – учебные материалы;
    - `data/processed/faiss_index/` – сохранённая векторная база;
    - `evaluate.py` – скрипт оценки качества;
@@ -430,8 +428,8 @@ streamlit run app.py
    - создание или обновление FAISS-индекса в `data/processed/faiss_index/`.
 
 5. Для подтверждения качества работы покажу результаты тестирования:
-   - файл `VALIDATION_REPORT.md` со сводными метриками;
-   - файл `FULL_TEST_LOGS.md` с примерами вопросов и ответов;
+   - файл `artifactsVALIDATION_REPORT.md` со сводными метриками;
+   - файл `artifactsFULL_TEST_LOGS.md` с примерами вопросов и ответов;
 
 В качестве ключевых метрик будут показаны:
 
