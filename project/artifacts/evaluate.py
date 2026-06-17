@@ -2,11 +2,11 @@ import time
 import json
 import statistics
 from collections import defaultdict
-from src.config import load_config
-from src.vector_store import VectorDB
-from src.rag_chain import get_rag_chain
+from src.models.rag_chain import get_rag_chain
+from src.service.config import load_config
+from src.service.vector_store import VectorDB
 # Импортируем обе функции
-from src.visualization import generate_markdown_report, save_detailed_logs
+from src.utils.visualization import generate_markdown_report, save_detailed_logs
 
 
 def run():

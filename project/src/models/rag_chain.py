@@ -3,7 +3,7 @@ from langchain_core.prompts import ChatPromptTemplate
 # В версии 0.3.x это самый надежный способ импорта:
 from langchain_classic.chains import create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
-from src.vector_store import VectorDB
+from src.service.vector_store import VectorDB
 
 def get_rag_chain(config, vector_db: VectorDB):
     # 1. Загрузка базы
@@ -35,6 +35,12 @@ def get_rag_chain(config, vector_db: VectorDB):
         "Если ответ не содержится в контексте, скажи: 'В документах нет информации об этом'. "
         "Не выдумывай информацию. "
         "Отвечай ВСЕГДА на русском языке, даже если контекст на английском.\n\n"
+        "Формат ответа:\n"
+        "- Используй Markdown: короткие абзацы, списки и выделение важных терминов.\n"
+        "- Для коротких формул используй inline math: `$x = 1$`.\n"
+        "- Для отдельных формул используй display math: `$$2 \\sin(x) - 1 = 0$$`.\n"
+        "- Не оборачивай формулы в квадратные скобки вида `[ ... ]`.\n"
+        "- Не используй LaTeX-разделители `\\[...\\]` и `\\(...\\)`; замени их на `$...$` или `$$...$$`.\n\n"
         "{context}"
     )
 

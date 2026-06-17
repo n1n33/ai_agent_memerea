@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from threading import Lock
 from time import perf_counter
@@ -7,10 +8,10 @@ from urllib.request import urlopen
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from src.config import load_config
-from src.document_loader import DocumentLoader
-from src.rag_chain import get_rag_chain
-from src.vector_store import VectorDB
+from src.data.document_loader import DocumentLoader
+from src.models.rag_chain import get_rag_chain
+from src.service.config import load_config
+from src.service.vector_store import VectorDB
 
 
 app = FastAPI(
@@ -83,7 +84,7 @@ def ensure_dataset_exists() -> None:
         return
 
     try:
-        from data.download_data import main as download_data
+        from src.data.download_data import main as download_data
 
         download_data()
     except Exception as exc:
@@ -132,6 +133,46 @@ def format_source(doc: Any) -> str:
         page = metadata["page"]
 
     return f"{source} (стр. {page})"
+
+
+def normalize_answer_markdown(answer: str) -> str:
+    """Convert common raw LaTeX wrappers to Streamlit-friendly Markdown math."""
+
+    def display_math(match: re.Match) -> str:
+        expr = match.group("expr").strip()
+        return f"\n\n$${expr}$$\n\n"
+
+    def inline_math(match: re.Match) -> str:
+        expr = match.group("expr").strip()
+        return f"${expr}$"
+
+    normalized = answer
+
+    normalized = re.sub(
+        r"\\\[\s*(?P<expr>.*?)\s*\\\]",
+        display_math,
+        normalized,
+        flags=re.DOTALL,
+    )
+    normalized = re.sub(
+        r"\\\(\s*(?P<expr>.*?)\s*\\\)",
+        inline_math,
+        normalized,
+        flags=re.DOTALL,
+    )
+    normalized = re.sub(
+        r"(?m)^\s*\[\s*(?P<expr>[^\n\[\]]*\\[A-Za-z]+[^\n\[\]]*)\s*\]\s*$",
+        display_math,
+        normalized,
+    )
+    normalized = re.sub(
+        r"\((?P<expr>\\[A-Za-z]+[^\n]*)\)",
+        inline_math,
+        normalized,
+    )
+    normalized = re.sub(r"\n{3,}", "\n\n", normalized)
+
+    return normalized.strip()
 
 
 @app.get("/")
@@ -241,7 +282,7 @@ def predict(request: QuestionRequest):
     sources = list(dict.fromkeys(format_source(doc) for doc in context))
 
     return {
-        "answer": response.get("answer", ""),
+        "answer": normalize_answer_markdown(response.get("answer", "")),
         "sources": sources,
         "model_version": config["llm_model"],
         "elapsed_seconds": round(perf_counter() - start_time, 2),

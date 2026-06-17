@@ -81,7 +81,7 @@ test_dataset_expanded.json
 python evaluate.py
 ```
 
-Отдельных ноутбуков для EDA в проекте нет. Основная обработка данных реализована в модулях `src/document_loader.py` и `src/vector_store.py`.
+Отдельных ноутбуков для EDA в проекте нет. Основная обработка данных реализована в модулях `src/data/document_loader.py` и `src/service/vector_store.py`.
 
 ---
 
@@ -190,10 +190,10 @@ LLM Qwen через Ollama
 Основные компоненты проекта:
 
 - `app.py` — веб-интерфейс Streamlit;
-- `src/document_loader.py` — загрузка документов;
-- `src/vector_store.py` — создание и загрузка FAISS-индекса;
-- `src/rag_chain.py` — RAG-цепочка;
-- `src/config.py` — загрузка конфигурации;
+- `src/data/document_loader.py` — загрузка документов;
+- `src/service/vector_store.py` — создание и загрузка FAISS-индекса;
+- `src/models/rag_chain.py` — RAG-цепочка;
+- `src/service/config.py` — загрузка конфигурации;
 - `evaluate.py` — тестирование качества системы.
 
 В проекте не реализован REST API с endpoints `/health` и `/predict`. Вместо этого используется веб-интерфейс Streamlit, доступный после запуска по адресу:

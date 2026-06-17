@@ -14,11 +14,11 @@
 
 | #  | Критерий                                                                 | Да/Нет (студент) | Где смотреть / комментарий                          |
 |----|---------------------------------------------------------------------------|------------------|-----------------------------------------------------|
-| 1  | Сервис запускается по инструкциям из `project/README.md` и работает      |      ✅          | README.md, запуск через py -m streamlit run src/app.py       |
+| 1  | Сервис запускается по инструкциям из `project/README.md` и работает      |      ✅          | README.md, запуск через py -m streamlit run src/service/app.py       |
 | 2  | Endpoint `/predict` использует **реальную модель**, а не заглушку        |      ✅          | REST API и endpoint /predict не реализованы; используется Streamlit-интерфейс с реальной моделью edu-qwen-14b через Ollama|
 | 3  | Есть EDA и хотя бы один эксперимент с метриками                          |       ✅         | EDA-ноутбуков нет; есть оценка качества через evaluate.py, VALIDATION_REPORT.md, MODEL_REPORT.md, evaluation_results.csv|
 | 4  | Есть baseline и улучшенная модель, есть **сравнение по метрикам**        |       ✅         | Классического baseline нет; есть сравнение ранней и финальной конфигурации в отчётах` |
-| 5  | Код не свален в один ноутбук: есть внятная структура в `src/`            |       ✅         | src/config.py, src/document_loader.py, src/vector_store.py, src/rag_chain.py, src/visualization.py` |
+| 5  | Код не свален в один ноутбук: есть внятная структура в `src/`            |       ✅         | src/service/config.py, src/data/document_loader.py, src/service/vector_store.py, src/models/rag_chain.py, src/utils/visualization.py` |
 | 6  | Есть Dockerfile **или** понятный сценарий развёртывания без Docker       |       ✅         | Dockerfile отсутствует, но есть сценарий установки и запуска через Python, Ollama и Streamlit       |
 | 7  | Есть `.env.example` и **нет** в репозитории реальных секретов/паролей    |       ✅         | .env.example отсутствует; реальные секреты и пароли в проекте не используются`    |
 | 8  | Реализованы логи/наблюдаемость (хотя бы консольные логи + `/health`)     |       ❌/✅         | Есть консольные логи через loguru и статусы в Streamlit; endpoint /health отсутствует` |
