@@ -37,14 +37,23 @@
   - `VALIDATION_REPORT.md` - протокол валидации системы;
   - `FULL_TEST_LOGS.md` - подробные логи тестовых запусков.
 - `src/` – основной код проекта:
-  - `app.py` – веб-приложение на Streamlit, через которое пользователь задаёт вопросы и получает ответы;
-  - `service/config.py` - загрузка конфигурации;
-  - `data/document_loader.py` - загрузка и обработка документов разных форматов;
-  - `service/vector_store.py`создание и загрузка векторной базы FAISS;
+  - `data/` - загрузка и подготовка данных;
+    - `data/download_data.py` - скрипт для загрузки или подготовки данных;
+    - `document_loader.py` - загрузка и обработка документов;
+  - `models/` - применение модели;
+    - `rag_chain.py` - построение RAG-цепочки: поиск релевантных фрагментов и генерация ответа;
+  - `service/` - запуск сервиса;
+    - `api.py` - API;
+    - `app.py` - UI через Streamlit;
+    - `config.py` - загрузка конфигурации;
+    - `start.ps1` - команда централизованного запуска всех сервисов;
+    - `start_services.py` - алгоритм централизованного запуска сервисов;
+    - `stop.ps1` - команда централизованной остановки всех сервисов;
+    - `stop_services.py` - алгоритм централизованной остановки сервисов;
+    - `vector_store.py`создание и загрузка векторной базы FAISS;
   - `models/rag_chain.py` - построение RAG-цепочки: поиск релевантных фрагментов и генерация ответа;
   - `utils/visualization.py` - формирование отчётов по результатам тестирования.
 - `data/` – данные проекта:
-  - `data/download_data.py` - скрипт для загрузки или подготовки данных;
   - `raw/math_dataset/` - исходные учебные материалы по математике;
   - `processed/faiss_index/` - сохранённый FAISS-индекс для семантического поиска.
 - `requirements.txt` – зависимости проекта, необходимые для запуска RAG-системы.
@@ -67,6 +76,7 @@
 Основные используемые технологии:
 
 - Streamlit;
+- FastAPI;
 - LangChain;
 - FAISS;
 - HuggingFace Embeddings;
@@ -114,16 +124,30 @@ ollama pull qwen2.5:14b-instruct-q3_K_M
 ollama create edu-qwen-14b -f Modelfile
 ```
 
-Перед запуском приложения необходимо убедиться, что сервис Ollama запущен:
+Приложение можно запустить одной командой. Скрипт поднимает Ollama, FastAPI и Streamlit:
+
+```bash
+.\scripts\start.ps1
+```
+
+Остановить все сервисы:
+
+```bash
+.\scripts\stop.ps1
+```
+
+Остановить только API и Streamlit, оставив Ollama запущенной:
+
+```bash
+.\scripts\stop.ps1 --keep-ollama
+```
+
+Логи сервисов сохраняются в `artifacts/logs/`. Если нужно запустить компоненты вручную:
 
 ```bash
 ollama serve
-```
-
-Запуск веб-приложения выполняется командой:
-
-```bash
-streamlit run app.py
+uvicorn src.service.api:app --reload
+py -m streamlit run src/service/app.py
 ```
 
 После запуска интерфейс будет доступен в браузере по адресу:
@@ -135,8 +159,6 @@ http://localhost:8501
 ---
 
 ## 4. Как запустить проект
-
-Проект не содержит отдельного этапа обучения модели в классическом смысле. Используется готовая локальная LLM-модель Qwen 2.5 через Ollama, а основная подготовка заключается в создании векторной базы знаний по учебным материалам.
 
 ### 4.1. Подготовка модели и базы знаний
 
@@ -168,10 +190,16 @@ ollama pull qwen2.5:14b-instruct-q3_K_M
 ollama create edu-qwen-14b -f Modelfile
 ```
 
-Проверить, что Ollama запущен:
+Поднять Ollama, API и Streamlit можно одной командой:
 
 ```bash
-ollama serve
+.\scripts\start.ps1
+```
+
+Остановить сервисы:
+
+```bash
+.\scripts\stop.ps1
 ```
 
 Учебные материалы должны находиться в папке:
@@ -188,10 +216,16 @@ data/processed/faiss_index/
 
 ### 4.2. Запуск веб-интерфейса
 
-Проект запускается как Streamlit-приложение:
+Проект запускается одной командой:
 
 ```bash
-py -m streamlit run src/service/app.py
+.\scripts\start.ps1
+```
+
+Остановка:
+
+```bash
+.\scripts\stop.ps1
 ```
 
 После запуска веб-интерфейс будет доступен в браузере по адресу:
@@ -392,14 +426,10 @@ artifacts/evaluation_results.csv
    - `evaluate.py` – скрипт оценки качества;
    - `VALIDATION_REPORT.md`, `FULL_TEST_LOGS.md`, `evaluation_results.csv` – результаты тестирования.
 
-2. Затем запущу локальную модель и веб-интерфейс:
+2. Затем запущу локальную модель, API и веб-интерфейс:
 
 ```bash
-ollama serve
-```
-
-```bash
-streamlit run app.py
+.\scripts\start.ps1
 ```
 
 После запуска откроется приложение в браузере.

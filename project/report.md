@@ -205,7 +205,7 @@ http://localhost:8501
 Запуск:
 
 ```bash
-streamlit run app.py
+.\scripts\start.ps1
 ```
 
 Технологический стек:
@@ -266,14 +266,10 @@ VALIDATION_REPORT.md
 FULL_TEST_LOGS.md
 ```
 
-Затем запускается Ollama и веб-интерфейс:
+Затем одной командой запускаются Ollama, API и веб-интерфейс:
 
 ```bash
-ollama serve
-```
-
-```bash
-streamlit run app.py
+.\scripts\start.ps1
 ```
 
 После запуска приложение открывается в браузере:

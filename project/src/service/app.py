@@ -47,7 +47,7 @@ def api_request(path: str, method: str = "GET", payload: dict | None = None, tim
 def render_api_help():
     st.error(f"Не удалось подключиться к API по адресу `{API_BASE_URL}`.")
     with st.expander("Как запустить API"):
-        st.code("uvicorn src.service.api:app --reload", language="powershell")
+        st.code(".\\scripts\\start.ps1", language="powershell")
 
 
 st.set_page_config(
