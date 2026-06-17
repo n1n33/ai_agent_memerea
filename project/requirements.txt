@@ -25,6 +25,8 @@ python-docx
 streamlit
 streamlit-extras
 watchdog
+fastapi
+uvicorn
 
 # Utils
 python-dotenv

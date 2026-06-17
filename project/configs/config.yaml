@@ -1,4 +1,5 @@
 app_name: "EduRAG: Qwen 14B Edition"
+api_base_url: "http://localhost:8000"
 data_path: "data/raw/math_dataset"
 vector_store_path: "data/processed/faiss_index"
 

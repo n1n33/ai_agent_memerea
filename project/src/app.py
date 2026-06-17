@@ -1,191 +1,164 @@
+import json
+import os
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
+
 import streamlit as st
-import time
-from urllib.request import urlopen
+
 from src.config import load_config
-from src.document_loader import DocumentLoader
-from src.vector_store import VectorDB
-from src.rag_chain import get_rag_chain
-from pathlib import Path
 
 
-def check_ollama_connection(base_url: str, timeout: float = 2.0):
-    api_url = f"{base_url.rstrip('/')}/api/tags"
-    try:
-        with urlopen(api_url, timeout=timeout) as response:
-            return 200 <= response.status < 300, ""
-    except Exception as exc:
-        return False, str(exc)
-
-
-# Загрузка настроек
 config = load_config()
+API_BASE_URL = os.getenv("RAG_API_URL", config.get("api_base_url", "http://localhost:8000")).rstrip("/")
 
 
-SUPPORTED_DATA_EXTENSIONS = {".md", ".txt", ".pdf", ".docx", ".raw"}
+class ApiError(RuntimeError):
+    pass
 
 
-def dataset_files_exist(data_path):
-    path = Path(data_path)
-    if not path.exists():
-        return False
+def api_request(path: str, method: str = "GET", payload: dict | None = None, timeout: float = 30.0):
+    url = f"{API_BASE_URL}{path}"
+    data = None
+    headers = {"Accept": "application/json"}
 
-    return any(
-        file_path.is_file() and file_path.suffix.lower() in SUPPORTED_DATA_EXTENSIONS
-        for file_path in path.rglob("*")
-    )
+    if payload is not None:
+        data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        headers["Content-Type"] = "application/json; charset=utf-8"
 
+    request = Request(url, data=data, headers=headers, method=method)
 
-def ensure_dataset_exists(data_path):
-    if dataset_files_exist(data_path):
-        return
-
-    with st.spinner("Данные не найдены. Запускаю автоматическую загрузку датасета..."):
+    try:
+        with urlopen(request, timeout=timeout) as response:
+            body = response.read().decode("utf-8")
+            return json.loads(body) if body else {}
+    except HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
         try:
-            from data.download_data import main as download_data
+            detail = json.loads(body).get("detail", body)
+        except json.JSONDecodeError:
+            detail = body
+        raise ApiError(f"API вернул {exc.code}: {detail}") from exc
+    except URLError as exc:
+        raise ApiError(f"API недоступен: {exc.reason}") from exc
+    except TimeoutError as exc:
+        raise ApiError("API не ответил вовремя") from exc
 
-            download_data()
-        except Exception as exc:
-            st.error(f"Не удалось автоматически загрузить данные: {exc}")
-            st.stop()
 
-    if not dataset_files_exist(data_path):
-        st.error(f"После загрузки данные не найдены в папке: {data_path}")
-        st.stop()
-
-    st.success("Данные загружены автоматически.")
+def render_api_help():
+    st.error(f"Не удалось подключиться к API по адресу `{API_BASE_URL}`.")
+    with st.expander("Как запустить API"):
+        st.code("uvicorn src.api:app --reload", language="powershell")
 
 
 st.set_page_config(
-    page_title=config['app_name'],
+    page_title=config["app_name"],
     page_icon="🎓",
-    layout="wide"
+    layout="wide",
 )
-ensure_dataset_exists(config['data_path'])
 
-# Стилизация
-st.markdown("""
+st.markdown(
+    """
 <style>
     .stChatMessage {border-radius: 10px; padding: 10px;}
     .stSpinner {text-align: center;}
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 st.title(f"🎓 {config['app_name']}")
 
-# Инициализация истории чата
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# --- САЙДБАР (Настройки и База) ---
 with st.sidebar:
-    st.header("⚙️ Управление базой знаний")
+    st.header("Управление базой знаний")
+    st.caption(f"API: {API_BASE_URL}")
 
-    st.info(f"LLM: {config['llm_model']}\nDevice: {config['embedding_device'].upper()}")
+    try:
+        health = api_request("/health", timeout=5)
+        st.info(
+            "\n".join(
+                [
+                    f"LLM: {health['llm_model']}",
+                    f"Ollama: {health['ollama']}",
+                    f"Vector DB: {health['vector_db']}",
+                ]
+            )
+        )
+    except ApiError:
+        health = None
+        render_api_help()
 
-    if st.button("🔄 Пересобрать базу знаний", type="primary"):
+    if st.button("Пересобрать базу знаний", type="primary", disabled=health is None):
         with st.status("Обновление индекса...", expanded=True) as status:
-            st.write("📂 Чтение файлов...")
-            loader = DocumentLoader(config['data_path'])
-            docs = loader.load_documents()
-
-            if docs:
-                st.write(f"🧩 Разбиение на чанки и векторизация ({len(docs)} док.)...")
-                vdb = VectorDB(config)
-                vdb.create_vector_db(docs)
-                status.update(label="Готово!", state="complete", expanded=False)
-                st.success(f"База обновлена! Всего документов: {len(docs)}")
-            else:
+            try:
+                st.write("API читает документы и пересобирает FAISS-индекс...")
+                result = api_request("/rebuild", method="POST", timeout=600)
+                status.update(label="Готово", state="complete", expanded=False)
+                st.success(f"База обновлена. Документов загружено: {result['documents_loaded']}")
+            except ApiError as exc:
                 status.update(label="Ошибка", state="error")
-                st.error("Файлы не найдены в папке data/raw")
+                st.error(str(exc))
 
     st.divider()
-    st.markdown("### Загруженные файлы:")
-    # Простое отображение списка файлов, если база существует
+    st.markdown("### Загруженные файлы")
     try:
-        import os
-
-        files = os.listdir(config['data_path'])
+        files_response = api_request("/files", timeout=10)
+        files = files_response.get("files", [])
         if files:
-            for f in files:
-                st.caption(f"📄 {f}")
+            for file_name in files:
+                st.caption(f"📄 {file_name}")
         else:
-            st.caption("Папка пуста")
-    except:
-        pass
+            st.caption("Файлы не найдены")
+    except ApiError as exc:
+        st.caption(str(exc))
 
-# --- ЧАТ ---
-# Отрисовка истории
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Ввод пользователя
-if prompt := st.chat_input("Задайте вопрос по лекциям или документам..."):
-    # Добавляем в историю
+prompt = st.chat_input("Задайте вопрос по лекциям или документам...")
+
+if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-        # Генерация ответа
-        with st.chat_message("assistant"):
-            ollama_ok, ollama_error = check_ollama_connection(config['ollama_base_url'])
-            if not ollama_ok:
-                error_message = (
-                    f"Не удалось подключиться к Ollama по адресу `{config['ollama_base_url']}`. "
-                    "Запустите Ollama и повторите запрос."
+    with st.chat_message("assistant"):
+        with st.spinner("Qwen изучает материалы..."):
+            try:
+                response = api_request(
+                    "/predict",
+                    method="POST",
+                    payload={"question": prompt},
+                    timeout=300,
                 )
+            except ApiError as exc:
+                error_message = str(exc)
                 st.error(error_message)
-                with st.expander("Команды для проверки Ollama"):
-                    st.code(
-                        f"""ollama serve
-    ollama list
-    ollama run {config['llm_model']} "привет\"""",
-                        language="powershell",
-                    )
-                    if ollama_error:
-                        st.caption(f"Техническая ошибка: {ollama_error}")
+                if "Ollama" in error_message:
+                    with st.expander("Команды для проверки Ollama"):
+                        st.code(
+                            f"""ollama serve
+ollama list
+ollama run {config['llm_model']} "привет\"""",
+                            language="powershell",
+                        )
                 st.session_state.messages.append({"role": "assistant", "content": error_message})
                 st.stop()
 
-            vdb = VectorDB(config)
-            rag_chain = get_rag_chain(config, vdb)
+        answer = response["answer"]
+        st.markdown(answer)
 
-        if rag_chain:
-            start_time = time.time()
-            with st.spinner("Qwen изучает материалы..."):
-                try:
-                    response = rag_chain.invoke({"input": prompt})
-                    answer = response['answer']
-                    context = response['context']
+        sources = response.get("sources", [])
+        if sources:
+            with st.expander("Использованные источники"):
+                for source in sources:
+                    st.markdown(f"- **{source}**")
 
-                    # Вывод ответа
-                    st.markdown(answer)
+        elapsed_seconds = response.get("elapsed_seconds")
+        if elapsed_seconds is not None:
+            st.caption(f"Время генерации: {elapsed_seconds:.2f} сек.")
 
-                    # Блок с источниками (Expander)
-                    with st.expander("📚 Использованные источники"):
-                        seen_sources = set()
-                        for doc in context:
-                            source = doc.metadata.get('source_file', 'Неизвестный файл')
-                            page = doc.metadata.get('page', 'Неизвестная стр.')  # Для PDF
-
-                            # Формируем уникальную строку источника
-                            source_info = f"{source}"
-                            if 'page' in doc.metadata:
-                                source_info += f" (стр. {page + 1})"
-
-                            if source_info not in seen_sources:
-                                st.markdown(f"- **{source_info}**")
-                                # Можно показать фрагмент текста, если нужно:
-                                # st.caption(doc.page_content[:200] + "...")
-                                seen_sources.add(source_info)
-
-                    elapsed = time.time() - start_time
-                    st.caption(f"⏱️ Время генерации: {elapsed:.2f} сек.")
-
-                    # Сохраняем ответ ассистента в историю
-                    st.session_state.messages.append({"role": "assistant", "content": answer})
-
-                except Exception as e:
-                    st.error(f"Произошла ошибка при генерации: {e}")
-        else:
-            st.warning("⚠️ База знаний не найдена. Пожалуйста, нажмите 'Пересобрать базу знаний' в меню слева.")
+        st.session_state.messages.append({"role": "assistant", "content": answer})
